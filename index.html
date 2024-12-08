@@ -12,46 +12,55 @@
         }
 
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            background-color: #f0f2f5;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             height: 100vh;
             display: flex;
             flex-direction: column;
             padding: 20px;
+            color: #2d3748;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             width: 100%;
             display: flex;
             flex-direction: column;
             height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+            backdrop-filter: blur(4px);
+            padding: 20px;
         }
 
         .header {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             margin-bottom: 20px;
+            color: white;
         }
 
         .header h1 {
-            color: #1a1a1a;
+            font-size: 2.2em;
             margin-bottom: 10px;
+            font-weight: 700;
         }
 
         .header p {
-            color: #666;
+            opacity: 0.9;
+            font-size: 1.1em;
         }
 
         .chat-container {
             flex: 1;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
             padding: 20px;
             margin-bottom: 20px;
             overflow-y: auto;
@@ -65,79 +74,97 @@
 
         .message {
             max-width: 80%;
-            padding: 10px 15px;
-            border-radius: 15px;
+            padding: 12px 18px;
+            border-radius: 18px;
             margin: 5px 0;
             word-wrap: break-word;
+            font-size: 1.1em;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         .user-message {
-            background-color: #0084ff;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
             align-self: flex-end;
+            border-bottom-right-radius: 5px;
         }
 
         .system-message {
-            background-color: #e4e6eb;
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
             align-self: flex-start;
+            border-bottom-left-radius: 5px;
         }
 
         .assistant-message {
-            background-color: #f0f2f5;
-            color: #1a1a1a;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
             align-self: flex-start;
+            border-bottom-left-radius: 5px;
         }
 
         .input-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
+            padding: 10px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         }
 
         .input-container input {
             flex: 1;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1.1em;
+            transition: all 0.3s ease;
+            background: #f8fafc;
         }
 
         .input-container input:focus {
             outline: none;
-            border-color: #0084ff;
-            box-shadow: 0 0 0 2px rgba(0,132,255,0.2);
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            background: white;
         }
 
         .input-container button {
-            padding: 12px 24px;
-            background-color: #0084ff;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.2s;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .input-container button:hover {
-            background-color: #0073e6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
         }
 
         .input-container button:disabled {
-            background-color: #ccc;
+            background: #cbd5e1;
+            transform: none;
             cursor: not-allowed;
         }
 
         .loading {
             display: flex;
-            gap: 5px;
-            padding: 10px;
+            gap: 6px;
+            padding: 15px;
+            justify-content: center;
         }
 
         .loading-dot {
-            width: 8px;
-            height: 8px;
-            background-color: #666;
+            width: 10px;
+            height: 10px;
+            background-color: #6366f1;
             border-radius: 50%;
             animation: bounce 1.4s infinite ease-in-out;
         }
@@ -146,8 +173,14 @@
         .loading-dot:nth-child(2) { animation-delay: -0.16s; }
 
         @keyframes bounce {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1.0); }
+            0%, 80%, 100% { 
+                transform: scale(0);
+                opacity: 0.5;
+            }
+            40% { 
+                transform: scale(1.0);
+                opacity: 1;
+            }
         }
 
         @media (max-width: 768px) {
@@ -157,7 +190,35 @@
             
             .message {
                 max-width: 90%;
+                font-size: 1em;
             }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .input-container button {
+                padding: 15px 20px;
+            }
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
         }
     </style>
 </head>
@@ -187,28 +248,23 @@
                 this.module = '';
                 this.ragClient = null;
                 
-                // DOM Elements
                 this.chatMessages = document.getElementById('chat-messages');
                 this.userInput = document.getElementById('user-input');
                 this.sendButton = document.getElementById('send-button');
                 this.statusText = document.getElementById('status-text');
                 
-                // Event Listeners
                 this.sendButton.addEventListener('click', () => this.handleSubmit());
                 this.userInput.addEventListener('keypress', (e) => {
                     if (e.key === 'Enter') this.handleSubmit();
                 });
 
-                // Connect to RAG server
                 this.initializeRAGConnection();
             }
 
             async initializeRAGConnection() {
                 try {
-                    // Connect to your RAG server
                     this.socket = io('http://localhost:3000');
                     
-                    // Listen for RAG responses
                     this.socket.on('ragResponse', (response) => {
                         this.handleRAGResponse(response);
                     });
@@ -306,21 +362,17 @@
                 this.addMessage(input, 'user');
 
                 if (!this.isInitialized) {
-                    // Handle module initialization
                     this.module = input;
                     this.setLoading(true);
                     this.showLoading();
 
-                    // Send initialization request to RAG server
                     this.socket.emit('initializeModule', {
                         module: this.module
                     });
                 } else {
-                    // Handle questions
                     this.setLoading(true);
                     this.showLoading();
 
-                    // Send question to RAG server
                     this.socket.emit('askQuestion', {
                         module: this.module,
                         question: input
@@ -329,7 +381,6 @@
             }
         }
 
-        // Initialize the chat interface
         const chat = new ChatInterface();
     </script>
 </body>
