@@ -1,1 +1,2 @@
 How can I use GoTrade.okx, what functions are available
+What is GoTrade

@@ -28,7 +28,7 @@ class AutoDoc {
             // Initialize models in parallel
             [this.nomic, this.llama] = await Promise.all([
                 this.client.embedding.getOrLoad("text-embedding-nomic-embed-text-v1.5"),
-                this.client.llm.getOrLoad("llama-3.2-3b-qnn")
+                this.client.llm.getOrLoad("qwen2.5-coder-7b-instruct")
             ]);
 
             console.log("Models initialized successfully!");
@@ -51,11 +51,11 @@ class AutoDoc {
             // Read all files in the directory
             this.files = await fs.readdir(documentPath);
             
-            // Filter for .md files only
-            const docFiles = this.files.filter(file => file.endsWith('.md'));
+            // Filter for both .md and .txt files
+            const docFiles = this.files.filter(file => file.endsWith('.md') || file.endsWith('.txt'));
             
             if (docFiles.length === 0) {
-                throw new Error('No markdown (.md) files found in the specified directory');
+                throw new Error('No documentation files (.md or .txt) found in the specified directory');
             }
 
             console.log(`Processing ${docFiles.length} documentation files...`);
@@ -110,7 +110,7 @@ class AutoDoc {
             const prompt = `\
 Answer the user's query with the following citation:
 ----- Citation -----
-${results.entries[1].content}
+${results.entries[0].content}
 ----- End of Citation -----
 User's question is ${question}`;
 
@@ -123,9 +123,9 @@ User's question is ${question}`;
                 }],
                 {
                     contextOverflowPolicy: "stopAtLimit",
-                    maxPredictedTokens: 200,
+                    maxPredictedTokens: 500,
                     stopStrings: ["\n"],
-                    temperature: 0.03,
+                    temperature: 0.4,
                 }
             );
 

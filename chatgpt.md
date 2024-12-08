@@ -1,4 +1,4 @@
-# GoTrade Functions Documentation
+GoTrade Functions Documentation
 
 This document provides detailed information on the available functions in the **GoTrade** module, organized by the exchanges they belong to. Each exchange supports trading operations, including market orders, limit orders, time-weighted average price (TWAP) orders, and edge-based strategies.
 

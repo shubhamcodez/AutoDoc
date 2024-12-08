@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask About Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        input, button {
+            padding: 10px;
+            font-size: 16px;
+            margin: 5px;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Ask About Documentation</h1>
+    <label for="question-input">Ask a question about the module:</label><br>
+    <input type="text" id="question-input" placeholder="Enter your question"><br><br>
+    <button onclick="askQuestion()">Ask</button>
+
+    <div id="response"></div>
+
+    <script>
+        const askQuestion = async () => {
+            const question = document.getElementById('question-input').value;
+
+            try {
+                const response = await fetch('http://localhost:3000/question', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question }),
+                });
+
+                const data = await response.json();
+                if (data.response) {
+                    document.getElementById('response').innerText = data.response;
+                } else {
+                    document.getElementById('response').innerText = 'No response from server';
+                }
+            } catch (error) {
+                console.error('Failed to fetch response:', error);
+                document.getElementById('response').innerText = 'Failed to fetch response';
+            }
+        };
+    </script>
+</body>
+</html>

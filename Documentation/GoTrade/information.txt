@@ -1,0 +1,75 @@
+# GoTrade QA Reference Guide
+
+Q: What is GoTrade?
+A: GoTrade is a Python module that provides trading functionalities across different cryptocurrency exchanges. It offers tools for executing various types of orders including market orders, limit orders, TWAP (Time Weighted Average Price) orders, and edge based trading strategies.
+
+Q: How do you import GoTrade in your Python code?
+A: To use GoTrade functionalities for specific exchanges, you import them as follows:
+```python
+from GoTrade.exchanges import bybit
+from GoTrade.exchanges import okx
+```
+
+Q: What exchanges does GoTrade support?
+A: Based on the documentation, GoTrade supports at least two major cryptocurrency exchanges:
+OKX
+Bybit
+
+Q: What types of orders can you place using GoTrade?
+A: GoTrade supports several types of orders:
+1. Market orders executed immediately at the best available price
+2. Limit orders executed at a specific price point
+3. TWAP orders splits the total quantity into smaller parts executed over time
+4. Market edge orders market orders with maximum time constraints
+5. TWAP edge orders combines TWAP strategy with edge based execution
+
+Q: How do you place a market order on OKX using GoTrade?
+A: You can place a market order on OKX using the following function:
+```python
+okx.market_order(symbol="DOT-USDT-SWAP", side="buy", quantity=1, blocking=True)
+```
+The parameters include:
+symbol: Trading pair
+side: "buy" or "sell"
+quantity: Amount to trade
+blocking: Whether to wait for order completion
+
+Q: What is the difference between regular TWAP orders and TWAP edge orders?
+A: While both order types split the total quantity into smaller parts:
+Regular TWAP orders execute trades at regular intervals over a specified duration
+TWAP edge orders add an edge strategy component to ensure execution within a defined time window, potentially optimizing the execution price
+
+Q: What additional parameter does Bybit require compared to OKX?
+A: Bybit requires an additional parameter called "instrument_type" which specifies the type of market (such as "LINEAR", "SPOT", etc) when placing orders.
+
+Q: How do you execute a TWAP order in GoTrade?
+A: TWAP orders can be executed using the twap_order function. For example, on OKX:
+```python
+okx.twap_order(
+    symbol="DOT-USDT-SWAP",
+    side="buy",
+    quantity=1,
+    duration=60,
+    interval=15,
+    blocking=True
+)
+```
+Key parameters include:
+duration: Total time in seconds for the order execution
+interval: Time in seconds between each smaller order
+
+Q: Do you need to log in before placing trades?
+A: Yes, you need to log in to the respective exchange before placing trades. Both exchanges provide login functions:
+```python
+okx.login()  # For OKX
+bybit.login()  # For Bybit
+```
+Make sure your credentials are properly configured in your environment or settings.
+
+Q: What is the purpose of the blocking parameter in order functions?
+A: The blocking parameter determines whether the function should wait for the order to be filled before proceeding with the next instruction:
+If blocking=True: The function will wait until the order is completely filled
+If blocking=False: The function will return immediately after placing the order
+
+Q: What is a market edge order?
+A: A market edge order is a special type of market order that includes a maximum time constraint (max_timer) for order completion. It ensures that the order must be executed within the specified time frame while attempting to get the best possible price.
