@@ -86,9 +86,9 @@ User's question is ${question}`;
                     content: prompt,
                 }],
                 {
-                    contextOverflowPolicy: "stopAtLimit",
+                    contextOverflowPolicy: "rollingWindow",
                     maxPredictedTokens: 500,
-                    temperature: 0.3,
+                    temperature: 0.1,
                 }
             );
 
