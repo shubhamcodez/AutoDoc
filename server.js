@@ -58,10 +58,47 @@ io.on('connection', (socket) => {
                 throw new Error('Session not initialized');
             }
 
-            // Use the retrieveAndRespond method from your RAG system
-            const response = await session.autoDoc.retrieveAndRespond(question);
-            
-            socket.emit('ragResponse', { content: response });
+            // Signal the start of streaming
+            socket.emit('streamStart');
+
+            // Retrieve relevant documentation
+            const results = await session.autoDoc.client.retrieval.retrieve(
+                `Get documentation about ${question}`, 
+                session.autoDoc.documentHandles, 
+                { embeddingModel: session.autoDoc.nomic }
+            );
+
+            if (!results.entries.length) {
+                throw new Error('No relevant documentation found');
+            }
+
+            const prompt = `\
+Answer the user's query with the following citation:
+----- Citation -----
+${results.entries[0].content}
+----- End of Citation -----
+User's question is ${question}`;
+
+            // Stream the response using llama model
+            const prediction = session.autoDoc.llama.respond([
+                {
+                    role: "user",
+                    content: prompt,
+                }],
+                {
+                    contextOverflowPolicy: "stopAtLimit",
+                    maxPredictedTokens: 500,
+                    temperature: 0.3,
+                }
+            );
+
+            // Stream each chunk to the client
+            for await (const { content } of prediction) {
+                socket.emit('streamChunk', { content });
+            }
+
+            // Signal the end of streaming
+            socket.emit('streamEnd');
             
         } catch (error) {
             console.error('Question processing error:', error);

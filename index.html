@@ -80,6 +80,7 @@
             word-wrap: break-word;
             font-size: 1.1em;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            line-height: 1.5;
         }
 
         .user-message {
@@ -183,6 +184,26 @@
             }
         }
 
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background-color: currentColor;
+            margin-left: 2px;
+            vertical-align: middle;
+            animation: blink 1s infinite;
+        }
+
+        .message.assistant-message.streaming {
+            border-left: 3px solid #f59e0b;
+        }
+
         @media (max-width: 768px) {
             body {
                 padding: 10px;
@@ -202,7 +223,7 @@
             }
         }
 
-        /* Custom scrollbar */
+        /* Scrollbar styling */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -246,7 +267,8 @@
                 this.isInitialized = false;
                 this.isLoading = false;
                 this.module = '';
-                this.ragClient = null;
+                this.currentMessageDiv = null;
+                this.cursor = null;
                 
                 this.chatMessages = document.getElementById('chat-messages');
                 this.userInput = document.getElementById('user-input');
@@ -258,39 +280,77 @@
                     if (e.key === 'Enter') this.handleSubmit();
                 });
 
-                this.initializeRAGConnection();
+                this.initializeSocketConnection();
             }
 
-            async initializeRAGConnection() {
-                try {
-                    this.socket = io('http://localhost:3000');
-                    
-                    this.socket.on('ragResponse', (response) => {
-                        this.handleRAGResponse(response);
-                    });
+            initializeSocketConnection() {
+                this.socket = io('http://localhost:3000');
+                
+                this.socket.on('connect', () => {
+                    console.log('Connected to server');
+                    this.addMessage('Connected to documentation server.', 'system');
+                });
 
-                    this.socket.on('initializationComplete', () => {
-                        this.handleInitializationComplete();
-                    });
+                this.socket.on('disconnect', () => {
+                    console.log('Disconnected from server');
+                    this.addMessage('Disconnected from documentation server.', 'system');
+                });
 
-                    this.socket.on('error', (error) => {
-                        this.handleError(error);
-                    });
+                this.socket.on('streamStart', () => {
+                    this.handleStreamStart();
+                });
 
-                    this.socket.on('connect', () => {
-                        console.log('Connected to RAG server');
-                        this.addMessage('Connected to documentation server.', 'system');
-                    });
+                this.socket.on('streamChunk', ({ content }) => {
+                    this.handleStreamChunk(content);
+                });
 
-                    this.socket.on('disconnect', () => {
-                        console.log('Disconnected from RAG server');
-                        this.addMessage('Disconnected from documentation server.', 'system');
-                    });
+                this.socket.on('streamEnd', () => {
+                    this.handleStreamEnd();
+                });
 
-                } catch (error) {
-                    console.error('Failed to connect to RAG server:', error);
-                    this.addMessage('Error: Failed to connect to documentation server.', 'system');
+                this.socket.on('initializationComplete', () => {
+                    this.handleInitializationComplete();
+                });
+
+                this.socket.on('error', (error) => {
+                    this.handleError(error);
+                });
+            }
+
+            handleStreamStart() {
+                const loadingElements = document.getElementsByClassName('loading');
+                while (loadingElements.length > 0) {
+                    loadingElements[0].remove();
                 }
+
+                this.currentMessageDiv = document.createElement('div');
+                this.currentMessageDiv.className = 'message assistant-message streaming';
+                
+                this.cursor = document.createElement('span');
+                this.cursor.className = 'cursor';
+                
+                this.currentMessageDiv.appendChild(document.createTextNode(''));
+                this.currentMessageDiv.appendChild(this.cursor);
+                
+                this.chatMessages.appendChild(this.currentMessageDiv);
+                this.scrollToBottom();
+            }
+
+            handleStreamChunk(content) {
+                if (this.currentMessageDiv) {
+                    this.currentMessageDiv.childNodes[0].textContent += content;
+                    this.scrollToBottom();
+                }
+            }
+
+            handleStreamEnd() {
+                if (this.currentMessageDiv) {
+                    this.cursor.remove();
+                    this.currentMessageDiv.classList.remove('streaming');
+                    this.currentMessageDiv = null;
+                    this.cursor = null;
+                }
+                this.setLoading(false);
             }
 
             addMessage(content, type) {
@@ -301,8 +361,27 @@
                 this.scrollToBottom();
             }
 
-            scrollToBottom() {
-                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            handleInitializationComplete() {
+                const loadingElements = document.getElementsByClassName('loading');
+                while (loadingElements.length > 0) {
+                    loadingElements[0].remove();
+                }
+                
+                this.addMessage('Documentation processed successfully! You can now ask questions.', 'system');
+                this.isInitialized = true;
+                this.statusText.textContent = `Currently browsing documentation for module: ${this.module}`;
+                this.userInput.placeholder = 'Ask a question about the documentation...';
+                this.setLoading(false);
+            }
+
+            handleError(error) {
+                const loadingElements = document.getElementsByClassName('loading');
+                while (loadingElements.length > 0) {
+                    loadingElements[0].remove();
+                }
+                
+                this.addMessage(`Error: ${error.message}`, 'system');
+                this.setLoading(false);
             }
 
             showLoading() {
@@ -315,43 +394,23 @@
                 `;
                 this.chatMessages.appendChild(loadingDiv);
                 this.scrollToBottom();
-                return loadingDiv;
+            }
+
+            scrollToBottom() {
+                requestAnimationFrame(() => {
+                    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                });
             }
 
             setLoading(isLoading) {
                 this.isLoading = isLoading;
                 this.sendButton.disabled = isLoading;
                 this.userInput.disabled = isLoading;
-            }
-
-            handleRAGResponse(response) {
-                const loadingElements = document.getElementsByClassName('loading');
-                if (loadingElements.length > 0) {
-                    loadingElements[0].remove();
+                if (isLoading) {
+                    this.sendButton.textContent = 'Loading...';
+                } else {
+                    this.sendButton.textContent = 'Send';
                 }
-                this.addMessage(response.content, 'assistant');
-                this.setLoading(false);
-            }
-
-            handleInitializationComplete() {
-                const loadingElements = document.getElementsByClassName('loading');
-                if (loadingElements.length > 0) {
-                    loadingElements[0].remove();
-                }
-                this.addMessage('Documentation processed successfully! You can now ask questions.', 'system');
-                this.isInitialized = true;
-                this.statusText.textContent = `Currently browsing documentation for module: ${this.module}`;
-                this.userInput.placeholder = 'Ask a question about the documentation...';
-                this.setLoading(false);
-            }
-
-            handleError(error) {
-                const loadingElements = document.getElementsByClassName('loading');
-                if (loadingElements.length > 0) {
-                    loadingElements[0].remove();
-                }
-                this.addMessage(`Error: ${error.message}`, 'system');
-                this.setLoading(false);
             }
 
             async handleSubmit() {
@@ -381,6 +440,7 @@
             }
         }
 
+        // Initialize the chat interface
         const chat = new ChatInterface();
     </script>
 </body>

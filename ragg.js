@@ -66,7 +66,7 @@ export class AutoDoc {
         }
     }
 
-    async retrieveAndRespond(question) {
+    async retrieveRelevantDocs(question) {
         try {
             console.log("\nRetrieving relevant documentation...");
             
@@ -80,16 +80,17 @@ export class AutoDoc {
                 throw new Error('No relevant documentation found');
             }
 
-            const prompt = `\
-Answer the user's query with the following citation:
------ Citation -----
-${results.entries[0].content}
------ End of Citation -----
-User's question is ${question}`;
+            return results.entries[0].content;
+        } catch (error) {
+            console.error('Error retrieving documentation:', error);
+            throw error;
+        }
+    }
 
-            console.log("\nGenerating response...");
+    async* streamResponse(prompt) {
+        try {
+            console.log("\nGenerating streaming response...");
             
-            let fullResponse = '';
             const prediction = this.llama.respond([
                 {
                     role: "user",
@@ -98,13 +99,35 @@ User's question is ${question}`;
                 {
                     contextOverflowPolicy: "stopAtLimit",
                     maxPredictedTokens: 500,
-                    stopStrings: ["\n"],
                     temperature: 0.3,
                 }
             );
 
-            for await (const { content } of prediction) {
-                fullResponse += content;
+            for await (const chunk of prediction) {
+                yield chunk.content;
+            }
+
+        } catch (error) {
+            console.error('Error generating response:', error);
+            throw error;
+        }
+    }
+
+    async retrieveAndRespond(question) {
+        try {
+            const relevantDoc = await this.retrieveRelevantDocs(question);
+
+            const prompt = `\
+Answer the user's query with the following citation:
+----- Citation -----
+${relevantDoc}
+----- End of Citation -----
+User's question is ${question}`;
+
+            // For backwards compatibility, collect all chunks into a single response
+            let fullResponse = '';
+            for await (const chunk of this.streamResponse(prompt)) {
+                fullResponse += chunk;
             }
             
             return fullResponse;
