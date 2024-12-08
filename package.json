@@ -1,0 +1,15 @@
+{
+  "name": "autodoc",
+  "version": "1.0.0",
+  "main": "Doc.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@lmstudio/sdk": "^0.4.2",
+    "cli-progress": "^3.12.0"
+  }
+}
