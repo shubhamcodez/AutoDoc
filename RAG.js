@@ -1,3 +1,4 @@
+//rag.js
 import { promises as fs } from 'fs';
 import { createInterface } from 'readline';
 import { dirname, join } from 'path';
@@ -28,7 +29,7 @@ class AutoDoc {
             // Initialize models in parallel
             [this.nomic, this.llama] = await Promise.all([
                 this.client.embedding.getOrLoad("text-embedding-nomic-embed-text-v1.5"),
-                this.client.llm.getOrLoad("qwen2.5-coder-7b-instruct")
+                this.client.llm.getOrLoad("llama-3.2-3b-qnn")
             ]);
 
             console.log("Models initialized successfully!");

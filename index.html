@@ -3,57 +3,334 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ask About Documentation</title>
+    <title>AutoDoc Chat Interface</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            line-height: 1.6;
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
         }
-        input, button {
-            padding: 10px;
-            font-size: 16px;
-            margin: 5px;
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
-        #response {
-            margin-top: 20px;
-            padding: 10px;
+
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+        }
+
+        .chat-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-y: auto;
+        }
+
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            margin: 5px 0;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background-color: #0084ff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .system-message {
+            background-color: #e4e6eb;
+            color: #1a1a1a;
+            align-self: flex-start;
+        }
+
+        .assistant-message {
+            background-color: #f0f2f5;
+            color: #1a1a1a;
+            align-self: flex-start;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-container input {
+            flex: 1;
+            padding: 12px;
             border: 1px solid #ccc;
-            min-height: 50px;
+            border-radius: 8px;
+            font-size: 16px;
+        }
+
+        .input-container input:focus {
+            outline: none;
+            border-color: #0084ff;
+            box-shadow: 0 0 0 2px rgba(0,132,255,0.2);
+        }
+
+        .input-container button {
+            padding: 12px 24px;
+            background-color: #0084ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.2s;
+        }
+
+        .input-container button:hover {
+            background-color: #0073e6;
+        }
+
+        .input-container button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: flex;
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #666;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .message {
+                max-width: 90%;
+            }
         }
     </style>
 </head>
 <body>
-    <h1>Ask About Documentation</h1>
-    <label for="question-input">Ask a question about the module:</label><br>
-    <input type="text" id="question-input" placeholder="Enter your question"><br><br>
-    <button onclick="askQuestion()">Ask</button>
+    <div class="container">
+        <div class="header">
+            <h1>AutoDoc Chat Interface</h1>
+            <p id="status-text">Please enter the module name you'd like documentation for:</p>
+        </div>
+        
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages"></div>
+        </div>
+        
+        <div class="input-container">
+            <input type="text" id="user-input" placeholder="Enter module name..." />
+            <button id="send-button">Send</button>
+        </div>
+    </div>
 
-    <div id="response"></div>
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
     <script>
-        const askQuestion = async () => {
-            const question = document.getElementById('question-input').value;
-
-            try {
-                const response = await fetch('http://localhost:3000/question', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question }),
+        class ChatInterface {
+            constructor() {
+                this.isInitialized = false;
+                this.isLoading = false;
+                this.module = '';
+                this.ragClient = null;
+                
+                // DOM Elements
+                this.chatMessages = document.getElementById('chat-messages');
+                this.userInput = document.getElementById('user-input');
+                this.sendButton = document.getElementById('send-button');
+                this.statusText = document.getElementById('status-text');
+                
+                // Event Listeners
+                this.sendButton.addEventListener('click', () => this.handleSubmit());
+                this.userInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.handleSubmit();
                 });
 
-                const data = await response.json();
-                if (data.response) {
-                    document.getElementById('response').innerText = data.response;
-                } else {
-                    document.getElementById('response').innerText = 'No response from server';
-                }
-            } catch (error) {
-                console.error('Failed to fetch response:', error);
-                document.getElementById('response').innerText = 'Failed to fetch response';
+                // Connect to RAG server
+                this.initializeRAGConnection();
             }
-        };
+
+            async initializeRAGConnection() {
+                try {
+                    // Connect to your RAG server
+                    this.socket = io('http://localhost:3000');
+                    
+                    // Listen for RAG responses
+                    this.socket.on('ragResponse', (response) => {
+                        this.handleRAGResponse(response);
+                    });
+
+                    this.socket.on('initializationComplete', () => {
+                        this.handleInitializationComplete();
+                    });
+
+                    this.socket.on('error', (error) => {
+                        this.handleError(error);
+                    });
+
+                    this.socket.on('connect', () => {
+                        console.log('Connected to RAG server');
+                        this.addMessage('Connected to documentation server.', 'system');
+                    });
+
+                    this.socket.on('disconnect', () => {
+                        console.log('Disconnected from RAG server');
+                        this.addMessage('Disconnected from documentation server.', 'system');
+                    });
+
+                } catch (error) {
+                    console.error('Failed to connect to RAG server:', error);
+                    this.addMessage('Error: Failed to connect to documentation server.', 'system');
+                }
+            }
+
+            addMessage(content, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}-message`;
+                messageDiv.textContent = content;
+                this.chatMessages.appendChild(messageDiv);
+                this.scrollToBottom();
+            }
+
+            scrollToBottom() {
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+
+            showLoading() {
+                const loadingDiv = document.createElement('div');
+                loadingDiv.className = 'message system-message loading';
+                loadingDiv.innerHTML = `
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                    <div class="loading-dot"></div>
+                `;
+                this.chatMessages.appendChild(loadingDiv);
+                this.scrollToBottom();
+                return loadingDiv;
+            }
+
+            setLoading(isLoading) {
+                this.isLoading = isLoading;
+                this.sendButton.disabled = isLoading;
+                this.userInput.disabled = isLoading;
+            }
+
+            handleRAGResponse(response) {
+                const loadingElements = document.getElementsByClassName('loading');
+                if (loadingElements.length > 0) {
+                    loadingElements[0].remove();
+                }
+                this.addMessage(response.content, 'assistant');
+                this.setLoading(false);
+            }
+
+            handleInitializationComplete() {
+                const loadingElements = document.getElementsByClassName('loading');
+                if (loadingElements.length > 0) {
+                    loadingElements[0].remove();
+                }
+                this.addMessage('Documentation processed successfully! You can now ask questions.', 'system');
+                this.isInitialized = true;
+                this.statusText.textContent = `Currently browsing documentation for module: ${this.module}`;
+                this.userInput.placeholder = 'Ask a question about the documentation...';
+                this.setLoading(false);
+            }
+
+            handleError(error) {
+                const loadingElements = document.getElementsByClassName('loading');
+                if (loadingElements.length > 0) {
+                    loadingElements[0].remove();
+                }
+                this.addMessage(`Error: ${error.message}`, 'system');
+                this.setLoading(false);
+            }
+
+            async handleSubmit() {
+                const input = this.userInput.value.trim();
+                if (!input || this.isLoading) return;
+
+                this.userInput.value = '';
+                this.addMessage(input, 'user');
+
+                if (!this.isInitialized) {
+                    // Handle module initialization
+                    this.module = input;
+                    this.setLoading(true);
+                    this.showLoading();
+
+                    // Send initialization request to RAG server
+                    this.socket.emit('initializeModule', {
+                        module: this.module
+                    });
+                } else {
+                    // Handle questions
+                    this.setLoading(true);
+                    this.showLoading();
+
+                    // Send question to RAG server
+                    this.socket.emit('askQuestion', {
+                        module: this.module,
+                        question: input
+                    });
+                }
+            }
+        }
+
+        // Initialize the chat interface
+        const chat = new ChatInterface();
     </script>
 </body>
 </html>
