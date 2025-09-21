@@ -12,6 +12,7 @@ AutoDoc is an intelligent documentation generation and querying system that uses
 - Interactive Q&A interface
 
 ## Project Structure
+<img width="1338" height="768" alt="image" src="https://github.com/user-attachments/assets/2e44a2d4-04e2-42e4-8f91-1451463a235e" />
 
 ```
 AutoDoc/
