@@ -2,6 +2,8 @@
 
 AutoDoc is an intelligent documentation generation and querying system that uses LMStudio to create and interact with module documentation. It consists of two main components: a documentation generator and a RAG-based (Retrieval-Augmented Generation) query system.
 
+
+Demo Video: https://youtu.be/UIUp08tBXPc
 <img width="1338" height="768" alt="image" src="https://github.com/user-attachments/assets/2e44a2d4-04e2-42e4-8f91-1451463a235e" />
 
 ## Features
